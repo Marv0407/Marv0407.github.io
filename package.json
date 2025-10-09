@@ -1,0 +1,10 @@
+{
+  "name": "SpaceInvaders",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js.gitignore",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "private": true
+}

@@ -1,0 +1,201 @@
+@font-face {
+    font-family: 'PixelifySans';
+    src: url('fonts/Pixelify_Sans/static/PixelifySans-Regular.ttf'); /*URL to font*/
+}
+
+@font-face {
+    font-family: 'PixelOperator-Bold';
+    src: url('fonts/Pixel_Operator/PixelOperator-Bold.ttf'); /*URL to font*/
+}
+
+@font-face {
+    font-family: 'PixelOperator';
+    src: url('fonts/Pixel_Operator/PixelOperator.ttf'); /*URL to font*/
+}
+
+html {
+    font-family: PixelOperator, Helvetica, sans-serif;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #000;
+
+}
+.wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.title {
+    max-height: 300px;
+    max-width: 640px;
+    margin: 0 0 20px 0;
+}
+
+.gamewindow {
+    display: flex;
+    flex-direction: column;
+    width: 600px;
+    height: 700px;
+    background-color: transparent;
+    border: 5px solid white;
+    border-radius: 10px;
+    background-image: url("./img/Neues Projekt.png");
+    background-size: cover;
+    z-index: 2;
+}
+.world {
+    position: absolute;
+    bottom: 15px;
+    width: 605px;
+    height: 160px;
+    box-sizing: border-box;
+    border-bottom-left-radius: 5%;
+    border-bottom-right-radius: 5%;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(102, 87, 199, 1) 6%, rgba(0, 251, 255, 1) 10%, rgba(83, 193, 237, 1) 19%);
+    z-index: 1;
+}
+.grid-container {
+    /*display: grid;*/
+    /*grid-template-columns: repeat(15, 30px);*/
+    /*grid-template-rows: repeat(10, 30px);*/
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    z-index: 10;
+
+
+}
+
+.scoreview {
+    padding: 0 10px 0 10px;
+    display: flex;
+    flex-direction: column;
+    color: white;
+    font-size: 40px;
+    background-color: rgba(240, 240, 240, 0.1);
+    border: 1px solid white;
+}
+.scoreview div {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.cell {
+    width: 32px;
+    height: 32px;
+    background-color: transparent;
+    border: 1px dotted rgba(240, 240, 240, 0);
+}
+
+
+
+#player {
+    width: 32px;
+    height: 32px;
+    background-image: url("./img/player.png");
+    background-size: cover;
+}
+
+.bullet {
+    width: 32px;
+    height: 32px;
+    background-image: url("./img/bullet.png");
+}
+
+ .enemy_red {
+     width: 32px;
+     height: 32px;
+    border-radius: 50% 50% 0 0;
+    background-image: url("./img/Red_enemy.png");
+}
+
+.enemy_blue {
+    width: 32px;
+    height: 32px;
+    border-radius: 50% 50% 0 0;
+    background-color: #ffffff;
+    box-shadow: inset 1px -3px 0 6px #003cff;
+}
+.enemy_yellow {
+    width: 32px;
+    height: 32px;
+    border-radius: 50% 50% 0 0;
+    background-color: white;
+    box-shadow: inset 0px 4px 0px 3px #ffc400;
+}
+
+.popup {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 40%;
+    padding: 10px;
+    background-color: transparent;
+    z-index: 99;
+}
+.popup .popup_content {
+    visibility: hidden;
+    width: 600px;
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    font-family: PixelOperator-Bold, Helvetica, sans-serif;
+    font-size: 90px;
+    color: white;
+    text-shadow: 6px 5px 1px #000;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.popup input {
+    margin: 10px 120px;
+    color: white;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.4);
+    text-align: center;
+    border-style: none;
+    border-bottom: 3px solid #939393;
+}
+
+.popup button {
+    font-family: PixelOperator-Bold, Helvetica, sans-serif;
+    font-size: 40px;
+    border: none;
+    border-radius: 10px;
+    margin: 5px 120px;
+    padding: 10px;
+    color: white;
+    background-color: transparent;
+    text-shadow: 2px 1px 1px #000;
+    text-decoration: none;
+    transition-duration: 0.5s;
+}
+
+
+
+.popup button:hover {
+    text-shadow: 0px 0px 17px #ffffff;
+    font-size: 50px;
+
+
+}
+
+.popup label {
+    font-size: 30px;
+    color: white;
+    text-shadow: 1px 3px 1px #000;
+}
+
+.popup .show {
+    visibility: visible;
+    -webkit-animation: fadeIn 1s;
+    animation: fadeIn 1s
+}

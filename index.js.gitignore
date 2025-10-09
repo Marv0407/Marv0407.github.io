@@ -1,0 +1,140 @@
+import {
+    ROWS,
+    COLUMNS,
+    GRID_SIZE,
+    BULLET_UPDATE_INTERVAL,
+    ENEMY_MOVE_INTERVAL,
+    ENEMY_POINTS,
+    LOOSE_ROW,
+    PLAYER_START_COL,
+    PLAYER_START_ROW
+} from "./src/config.js";
+import {formatScore, getCell, parseCellId} from "./src/utils.js";
+import {initGrid} from "./src/grid.js";
+import {getPlayer, moveLeft, movePlayer, moveRight, spawnPlayer} from "./src/player.js";
+import {moveEnemyDown, moveEnemySide, spawnEnemy} from "./src/enemy.js";
+import {getAllBullets, shoot, updateBullet} from "./src/bullet.js";
+
+
+
+let gameover = false
+let curScore = 0
+
+
+initGrid(".grid-container")
+
+
+
+
+
+
+
+
+
+
+
+
+spawnEnemy(4, "red")
+moveEnemyDown()
+spawnEnemy(1, "blue")
+moveEnemyDown()
+spawnEnemy(1, "yellow")
+
+spawnPlayer(PLAYER_START_ROW, PLAYER_START_COL)
+
+
+
+
+//KEYPRESS EVENT HANDLER
+const keyPressed = (event) => {
+    let key = event.key
+    switch (key) {
+        case "ArrowUp":
+            if(!gameover) {shoot()}
+            const player = getPlayer()
+            if(!player.classList.contains("shooting") && !gameover) {
+                player.classList.add("shooting");
+                player.style.backgroundImage = `url("./img/player_shoot.png")`
+
+                setTimeout(() => {
+                    player.style.backgroundImage = `url("./img/player.png")`
+                    player.classList.remove("shooting")
+                }, 80)
+            }
+            break
+        case "ArrowLeft":
+            if(!gameover) {moveLeft()}
+            break
+        case "ArrowRight":
+            if(!gameover) {moveRight()}
+            break
+        default:
+            console.error(key + " ist nicht belegt")
+            break
+    }
+}
+document.body.addEventListener('keydown', keyPressed)
+
+function checkForLoose() {
+    let enemies = document.querySelectorAll("#enemy")
+
+    for (let enemy of enemies) {
+        let enemyParId = enemy.parentElement.id
+        let row = parseInt(enemyParId.split("_")[0])
+        //let col = parseInt(enemyParId.split("_")[1])
+
+        if (row == LOOSE_ROW) {
+            console.log("Verloren")
+            gameover = true
+            clearInterval(enemyMoveInterval)
+            clearInterval(updateBulletInterval)
+
+            document.getElementById("popup").classList.add("show")
+
+        }
+    }
+}
+
+
+let direction = "initial"
+
+let updateBulletInterval = setInterval(function () {
+    let bullets = getAllBullets();
+    for (let bullet of bullets) {
+        const points = updateBullet(bullet);
+        curScore += points;
+    }
+}, BULLET_UPDATE_INTERVAL);
+
+
+let count = 0
+let count2 = -3
+let maxCount = 0
+
+let enemyMoveInterval = setInterval(function () {
+
+        count++
+
+    if (count >= maxCount) {
+        if (direction === 'initial') {
+            direction = 'left';
+            direction = 'left';
+            maxCount = 6;
+            count = 3;
+        } else if (direction === 'left') {
+            direction = 'right';
+            count = 0;
+        } else if (direction === 'right') {
+            direction = 'left';
+            count = 0;
+        }
+    }
+        moveEnemySide(direction)
+        count2++
+        if (count2 >= maxCount) {
+            moveEnemyDown()
+            checkForLoose()
+            count2 = 0
+        }
+}, ENEMY_MOVE_INTERVAL)
+
