@@ -12,11 +12,11 @@ export const PLAYER_START_COL = 8
 
 // Gegner Kofiguration
 export const ENEMY_POINTS = {
-    red: {points: 10},
-    blue: {points: 20},
-    yellow: {points: 30},
-    ufo: {points: 100}
-}
+    red: 10,
+    blue: 30,
+    yellow: 20,
+    ufo: 100
+};
 
 // Gegner-Bewegung
 export const ENEMY_MOVEMENT = {

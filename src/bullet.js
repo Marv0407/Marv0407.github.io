@@ -48,7 +48,7 @@ export function updateBullet(bullet) {
             if (targetCell.children[0].id == "enemy") {
 
                 const enemy = targetCell.children[0]
-                const enemyType = enemy.getAttribute("Type")
+                const enemyType = enemy.getAttribute("type")
                 const points = getEnemyPoints(enemyType)
 
                 console.log(`Treffer ${enemyType}`)
