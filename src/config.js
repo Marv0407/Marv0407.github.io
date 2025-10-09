@@ -41,7 +41,7 @@ export const WAVES = [
             { type: "yellow", rows: 1}
         ],
         enemySpeed: 1000,
-        enemyShootChance: 0.0001
+        enemyShootChance: 0.000001
     },
     // Wave 2
     {
@@ -51,7 +51,7 @@ export const WAVES = [
             { type: 'red', rows: 2 }
         ],
         enemySpeed: 900,
-        enemyShootChance: 0.0015
+        enemyShootChance: 0.000015
     },
     // Wave 3
     {
@@ -61,7 +61,7 @@ export const WAVES = [
             { type: 'red', rows: 1 }
         ],
         enemySpeed: 800,
-        enemyShootChance: 0.002
+        enemyShootChance: 0.00002
     },
     // Wave 4+
     {
@@ -70,7 +70,7 @@ export const WAVES = [
             { type: 'blue', rows: 3 }
         ],
         enemySpeed: 700,
-        enemyShootChance: 0.003
+        enemyShootChance: 0.00003
     }
 ]
 

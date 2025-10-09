@@ -1,6 +1,5 @@
-
 import {getAllBullets, resetBulletCount, shoot, updateBullet} from "./bullet.js";
-import {BULLET_UPDATE_INTERVAL, ENEMY_MOVE_INTERVAL, ENEMY_MOVEMENT, LOOSE_ROW, PLAYER_LIVES, WAVES} from "./config.js";
+import {BULLET_UPDATE_INTERVAL, ENEMY_MOVEMENT, LOOSE_ROW, PLAYER_LIVES, WAVES} from "./config.js";
 import {
     enemyShoot,
     getAllEnemies,
@@ -20,6 +19,7 @@ let gameover = false
 let curScore = 0
 let curLives = PLAYER_LIVES;
 let curWave = 0
+let isSpawningWave = false;
 
 // ENemy Movement State
 let count = 0
@@ -43,7 +43,8 @@ export function startGame() {
     updateLivesDisplay()
     startNextWave()
     startBulletUpdates()
-    startEnemyMovement()
+   // startEnemyMovement()
+    startEnemyShooting()
 
 }
 
@@ -68,6 +69,11 @@ export function stopGame() {
     console.log("Spiel gestoppt!")
 }
 function startNextWave() {
+    // bugfix für wavespam bei leerem grid
+    if(isSpawningWave) return
+    isSpawningWave = true
+
+
     // stoppt die aktuelle welle
     if (enemyMoveInterval) {
         clearInterval(enemyMoveInterval)
@@ -75,17 +81,23 @@ function startNextWave() {
 
     // enemeMovement reset
     count = 0
-    count2 = 0
+    count2 = -3
     maxCount = ENEMY_MOVEMENT.initialMaxCount
     direction = "initial"
 
     // wellen konfig holen
     const waveConfig = WAVES[Math.min(curWave, WAVES.length - 1)]
+    if(!waveConfig) {
+        console.error("Wellen Konfig nicht gefunden für Welle:", curWave)
+        isSpawningWave = false
+        return
+    }
+
     currentEnemySpeed = waveConfig.enemySpeed
     currentEnemyShootChance = waveConfig.enemyShootChance
 
     //gegner spawnen
-    let currentRow = 1
+
     waveConfig.enemies.forEach(enemyGroup => {
         spawnEnemy(enemyGroup.rows, enemyGroup.type)
         for (let i = 0; i < enemyGroup.rows; i++) {
@@ -98,6 +110,9 @@ function startNextWave() {
     //enemymovement intervall mit neuer geschwindigkeit starten
 
     startEnemyMovement()
+
+
+    isSpawningWave = false
 }
 
 
@@ -155,7 +170,7 @@ function startEnemyMovement() {
             checkForLoose()
             count2 = 0
         }
-    }, ENEMY_MOVE_INTERVAL)
+    }, currentEnemySpeed)
 }
 
 function startEnemyShooting() {
@@ -167,13 +182,16 @@ function startEnemyShooting() {
         if (Math.random() < currentEnemyShootChance + enemies.length) {
             enemyShoot()
         }
-    }, 100)
+    }, 500)
 }
 
 function checkWaveComplete() {
+    if(isSpawningWave || gameover) return
+
     const enemies = getAllEnemies()
-    if (enemies.length === 0 && !gameover) {
+    if (enemies.length === 0) {
         curWave++
+        isSpawningWave = true
         console.log("Welle abgeschlossen")
         setTimeout(() => {
             startNextWave()
@@ -194,18 +212,41 @@ function loseLife() {
     curLives--
     updateLivesDisplay()
 
-    console.timeLog(`leben Verloren, verbleibende Leben:${curLives}`)
+    console.log(`leben Verloren, verbleibende Leben:${curLives}`)
 
     if(curLives <= 0) {
         endGame()
     } else {
-        //respawn
+        isSpawningWave = true
+        // Stoppe alle Intervals während Respawn
+        if (updateBulletInterval) {
+            clearInterval(updateBulletInterval)
+            updateBulletInterval = null
+        }
+        if (enemyMoveInterval) {
+            clearInterval(enemyMoveInterval)
+            enemyMoveInterval = null
+        }
+        if (enemyShootInterval) {
+            clearInterval(enemyShootInterval)
+            enemyShootInterval = null
+        }
+
+        // Grid clearen und Spieler respawnen
         clearGrid()
         spawnPlayer()
 
-        //welle beginnt von vorn
-        curWave--
-        startNextWave()
+        // Welle zurücksetzen (nicht decrementieren wenn Wave 0)
+        if (curWave > 0) {
+            curWave--
+        }
+
+        // Neustart mit kleiner Verzögerung
+        setTimeout(() => {
+            startBulletUpdates()
+            startEnemyShooting()
+            startNextWave()
+        }, 1000)
     }
 }
 
@@ -225,6 +266,15 @@ function showGameOverPopup() {
         if (gameOverText) {
             gameOverText.innerHTML = `GAME OVER<br>SCORE: ${formatScore(curScore)}`
         }
+
+        /*
+        const input = popup.querySelector("input")
+        const buttons = popup.querySelectorAll("button")
+
+        if (input) input.disabled = false
+        buttons.forEach(btn => btn.disabled = false)
+
+         */
 
 
     }
@@ -269,6 +319,7 @@ export function resetGame() {
     count2 = -3
     maxCount = ENEMY_MOVEMENT.initialMaxCount
     direction = "initial"
+    isSpawningWave = false
 
     updateScoreDisplay()
     updateLivesDisplay()
@@ -301,12 +352,12 @@ export function getHighscores() {
     return stored ? JSON.parse(stored) : []
 }
 
-export function updateHighscroeDisplay() {
+export function updateHighscoreDisplay() {
     const highscores = getHighscores()
-    const hiScroeElement = document.querySelector(".score span:nth-child(2)")
+    const hiScoreElement = document.querySelector(".score span:nth-child(2)")
 
-    if(hiScroeElement && highscores.length > 0) {
-        hiScroeElement.innerHTML = formatScore(highscores[0].score)
+    if(hiScoreElement && highscores.length > 0) {
+        hiScoreElement.innerHTML = formatScore(highscores[0].score)
     }
 }
 
@@ -320,7 +371,7 @@ export function handleKeyPress(event) {
             if (!gameover) {
                 shoot()
                 const player = getPlayer()
-                if (!player.classList.contains("shooting") && !gameover) {
+                if (player && !player.classList.contains("shooting")) {
                     player.classList.add("shooting");
                     player.style.backgroundImage = `url("./img/player_shoot.png")`
 
@@ -385,7 +436,7 @@ function startGamepadPolling() {
         //links rechts, linker stick oder d-pad
         if(gamepad.axes[0] < -0.5 || gamepad.buttons[14]?.pressed) {
             moveLeft()
-        } else if (gamepad.axes > 0.5 || gamepad.buttons[15]?.pressed) {
+        } else if (gamepad.axes[0] > 0.5 || gamepad.buttons[15]?.pressed) {
             moveRight()
         }
 

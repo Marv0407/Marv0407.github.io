@@ -110,6 +110,13 @@ body {
     background-image: url("./img/bullet.png");
 }
 
+.enemy_bullet {
+    width: 32px;
+    height: 32px;
+    background-color: white;
+
+}
+
  .enemy_red {
      width: 32px;
      height: 32px;

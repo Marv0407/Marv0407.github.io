@@ -1,4 +1,4 @@
-import { ROWS, COLUMNS, GRID_SIZE} from "./config.js"
+import {COLUMNS, GRID_SIZE, ROWS} from "./config.js"
 
 
 /**

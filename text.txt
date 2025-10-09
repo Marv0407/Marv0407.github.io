@@ -1,0 +1,3 @@
+game.js:84 Uncaught TypeError: Cannot read properties of undefined (reading 'enemySpeed') at startNextWave (game.js:84:36) at loseLife (game.js:208:9) at game.js:122:17
+
+Ich denke, dadurch das das komplette grid gecleart wird, und der timeout läuft, wird extrem oft die welle abgefragt bzw in der zeit wired die welle extrem oft abgeschlossen und dem nach werden 21 wellen auf einmal gespawnt.
