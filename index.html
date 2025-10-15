@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <title>SpaceInvaders</title>
+    <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
     <link rel="stylesheet" href="style.css">
 </head>
-<body >
+<body>
+<div id="viewport-width"></div>
+    <img class="title" src="img/Space_Invaders.webp" height="720" width="1280" alt="SpaceInvaders-Title"/>
 
-<img class="title" src="img/Space_Invaders.webp" height="720" width="1280"/>
+
 
     <div class="wrapper">
-        <div class="world"></div>
-        <div  class="popup">
+
+<!--        <div class="world"></div>-->
+        <div  class="popup centered">
             <div id="popup" class="popup_content">
                 <span>GAME OVER</span>
                 <label for="input">Username:</label>
@@ -33,14 +37,30 @@
                     <span id="curScore">00000</span>
                     <span>00000</span>
                     <span>XXX</span></div>
-
             </div>
 
             <div class="grid-container" id="grid"></div>
 
         </div>
-    </div>
 
+    </div>
+<div id="highscore">
+    <div class="highscore_title"><h3>HIGHSCORES</h3></div>
+
+    <div class="highscore_content gradient-text" id="hs_content"></div>
+</div>
+<div id="debug_btn">
+    <button id="wave_skip">Skip Wave</button>
+    <button id="restart_wave">Restart Wave</button>
+    <button id="game_over">Gameover</button>
+
+    <article>
+        <p>Current Wave:  <span id="curWaveDisplay">null</span></p>
+        <pre id="waveInfoDisplay">Lädt...</pre>
+
+
+    </article>
+</div>
 
 <script type="module" src="./src/main.js"></script>
 </body>

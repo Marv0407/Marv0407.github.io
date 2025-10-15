@@ -1,7 +1,7 @@
 import { getCell, parseCellId } from './utils.js'
 import { getPlayer } from './player.js'
 import { getEnemyPoints } from './enemy.js'
-import {ENEMY_POINTS} from "./config.js";
+import {DEBUG, ENEMY_POINTS} from "./config.js";
 
 let bulletCount = 0;
 
@@ -15,7 +15,7 @@ export function shoot() {
     const playerCellId = getPlayer().parentElement.id
     const {row , col} = parseCellId(playerCellId)
 
-    console.log("Pew")
+    //console.log("Pew")
 
     const newBullet = document.createElement("div")
     newBullet.id = `bullet_${bulletCount}`
@@ -51,7 +51,10 @@ export function updateBullet(bullet) {
                 const enemyType = enemy.getAttribute("type")
                 const points = getEnemyPoints(enemyType)
 
-                console.log(`Treffer ${enemyType}`)
+                if (DEBUG) {
+                    console.info(`Treffer ${enemyType}`)
+                }
+
 
                 targetCell.innerHTML = "" // löscht alle Kinder in der Cell(Gegner und Bullet)
 

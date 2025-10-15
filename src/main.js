@@ -1,9 +1,18 @@
 /**
  * Space Invaders - Main Entry Point
  */
-import {initControls, resetGame, saveHighscore, startGame, updateHighscoreDisplay} from "./game.js";
+import {
+    curScore,
+    curWave,
+    initControls,
+    initiateDebugButtons,
+    resetGame,
+    startGame,
+    updateHighscoreDisplay,
+} from "./game.js";
 import {spawnPlayer} from "./player.js";
 import {initGrid} from "./grid.js";
+import {ladeHighscoreVomServer, speicherScore, zeigeHighscore} from "./scoreHandler.js";
 
 
 //Initialisierung des kompletten spiels
@@ -32,6 +41,13 @@ function init() {
     setupGameControls()
     console.log("✓ buttons initialisiert")
 
+    zeigeHighscore()
+    console.log("✓ Highscore geladen")
+
+    //initiateDebugButtons()
+    //console.log("✓ Debugmenü initialisiert")
+    console.log("× Debugmenü deaktiviert")
+
     //spiel starten
     startGame()
     console.log("✓ Spiel gestartet")
@@ -46,7 +62,7 @@ function setupGameControls() {
         submitBtn.addEventListener("click", () => {
             const username = input.value.trim()
             if (username && username !== "...") {
-                saveHighscore(username)
+                speicherScore(username, curWave + 1, curScore)
                 submitBtn.disabled = true
                 alert(`Highscore gespeichert für ${username}!`)
             }
@@ -64,5 +80,11 @@ function setupGameControls() {
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
 } else {
-    init()
+    window.onload = async () => {
+        await ladeHighscoreVomServer()
+
+        init()
+
+    }
+
 }

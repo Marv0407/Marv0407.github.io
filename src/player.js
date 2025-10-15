@@ -51,7 +51,7 @@ export function moveLeft() {
     const playerCellId = player.parentElement.id
     const { row, col } = parseCellId(playerCellId)
 
-    console.log("row:" + row + ", col:" + col)
+    //console.log("row:" + row + ", col:" + col)
 
     try { // Wenn links nicht mehr möglich (grid vorbei) konsolen log :)
         movePlayer(row, col - 1)
@@ -67,7 +67,7 @@ export function moveRight() {
     const playerCellId = player.parentElement.id
     const {row, col} = parseCellId(playerCellId)
 
-    console.log("row:" + row + ", col:" + col)
+    // console.log("row:" + row + ", col:" + col)
 
     try { // Wenn rechts nicht mehr möglich (grid vorbei) konsolen log :)
         movePlayer(row, col + 1) // + 1 von der aktuellen position

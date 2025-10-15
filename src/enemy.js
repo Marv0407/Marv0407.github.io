@@ -1,5 +1,5 @@
 import { getCell, parseCellId } from './utils.js';
-import {COLUMNS, ENEMY_POINTS, ENEMY_SPAWN_MARGIN} from './config.js';
+import {COLUMNS, DEBUG, ENEMY_POINTS, ENEMY_SPAWN_MARGIN} from './config.js';
 
 export function spawnEnemy(rows, type) {
     if(!ENEMY_POINTS[type]) {
@@ -10,7 +10,10 @@ export function spawnEnemy(rows, type) {
     for (let i = 1; i < rows + 1; i++) {
         for (let j = 1; j < COLUMNS + 1; j++) {
             if (j > ENEMY_SPAWN_MARGIN.left && j < COLUMNS - ENEMY_SPAWN_MARGIN.right) {
-                createEnemy(i, j, type)
+                if (DEBUG) {
+                    console.info("`übergebe werte row:${i} col:${j} typ ${type})`")
+                }
+                    createEnemy(i, j, type)
             }
         }
     }
@@ -25,11 +28,15 @@ function createEnemy(row, col, type) {
 
     const cell = getCell(row, col)
     if (cell) {
+        if (DEBUG) {
+            console.info(cell)
+        }
         cell.appendChild(newEnemy)
     }
 }
 
 export function moveEnemyDown() {
+    console.log("moveEnemyDown()")
     const enemies = document.querySelectorAll("#enemy")
 
 

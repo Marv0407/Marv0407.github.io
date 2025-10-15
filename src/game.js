@@ -1,5 +1,14 @@
 import {getAllBullets, resetBulletCount, shoot, updateBullet} from "./bullet.js";
-import {BULLET_UPDATE_INTERVAL, ENEMY_MOVEMENT, LOOSE_ROW, PLAYER_LIVES, WAVES} from "./config.js";
+import {
+    BULLET_UPDATE_INTERVAL,
+    COLUMNS,
+    DEBUG,
+    ENEMY_MOVEMENT,
+    ENEMY_SPAWN_MARGIN,
+    LOOSE_ROW,
+    PLAYER_LIVES,
+    WAVES
+} from "./config.js";
 import {
     enemyShoot,
     getAllEnemies,
@@ -7,19 +16,20 @@ import {
     getLowestEnemyRow,
     moveEnemyDown,
     moveEnemySide,
-    spawnEnemy,
     updateEnemyBullet
 } from "./enemy.js";
-import {formatScore} from "./utils.js";
+import {formatScore, getCell} from "./utils.js";
 import {getPlayer, moveLeft, moveRight, spawnPlayer} from "./player.js";
 import {clearGrid} from "./grid.js";
+import {highscore} from "./scoreHandler.js";
 
 // Game state
 let gameover = false
-let curScore = 0
+export let curScore = 0
 let curLives = PLAYER_LIVES;
-let curWave = 0
+export let curWave = 0
 let isSpawningWave = false;
+let isRespawning = false
 
 // ENemy Movement State
 let count = 0
@@ -27,7 +37,8 @@ let count2 = -3
 let maxCount = ENEMY_MOVEMENT.initialMaxCount
 let direction = "initial"
 let currentEnemySpeed = 1000
-let currentEnemyShootChance = 0.001
+let currentEnemyShootChance = 10
+
 
 // Interval IDs
 let updateBulletInterval = null
@@ -44,11 +55,17 @@ export function startGame() {
     startNextWave()
     startBulletUpdates()
    // startEnemyMovement()
-    startEnemyShooting()
+   startEnemyShooting()
+
 
 }
 
+
 export function stopGame() {
+    if (DEBUG) {
+        console.info("stopGame()")
+    }
+
     gameover = true
 
     if (updateBulletInterval) {
@@ -69,9 +86,20 @@ export function stopGame() {
     console.log("Spiel gestoppt!")
 }
 function startNextWave() {
+    if (DEBUG) {
+        console.info("startNextWave()")
+    }
+
+
+    console.log(`startNextWave abgerufen, isSpawningWave:${isSpawningWave}, curWave:${ curWave }`)
     // bugfix für wavespam bei leerem grid
-    if(isSpawningWave) return
+    if(isSpawningWave) {
+        console.log("startNextWave Abgebrochen - bereits am spawnen")
+        return
+    }
+    //console.log("isSpawningWave=", isSpawningWave)
     isSpawningWave = true
+    //console.log("isSpawningWave -> ", isSpawningWave)
 
 
     // stoppt die aktuelle welle
@@ -87,9 +115,12 @@ function startNextWave() {
 
     // wellen konfig holen
     const waveConfig = WAVES[Math.min(curWave, WAVES.length - 1)]
+    console.log("waveConfig:", waveConfig)
     if(!waveConfig) {
         console.error("Wellen Konfig nicht gefunden für Welle:", curWave)
+       // console.log("isSpawningWave=", isSpawningWave)
         isSpawningWave = false
+       // console.log("isSpawningWave -> ", isSpawningWave)
         return
     }
 
@@ -98,25 +129,56 @@ function startNextWave() {
 
     //gegner spawnen
 
+    console.log("spawne gegner für welle:", curWave + 1)
+    let isFirstRow = true
+
+    let currentRow = 1
     waveConfig.enemies.forEach(enemyGroup => {
-        spawnEnemy(enemyGroup.rows, enemyGroup.type)
-        for (let i = 0; i < enemyGroup.rows; i++) {
-            moveEnemyDown()
+        console.log(`→ Spawne ${enemyGroup.rows} Reihen ${enemyGroup.type}`)
+        for(let rowOffset = 0; rowOffset < enemyGroup.rows; rowOffset++) {
+            spawnEnemyAtRow(currentRow + rowOffset, enemyGroup.type)
         }
+
+        currentRow += enemyGroup.rows
+
+            // for (let i = 0; i < enemyGroup.rows; i++) {
+            //     moveEnemyDown()
+            // }
     })
 
-    console.log(`Welle ${curWave + 1} gestartet`)
+    const enemyCount = getAllEnemies().length;
+    console.log(`Welle ${curWave + 1} gestartet mit ${enemyCount} Gegnern`)
 
     //enemymovement intervall mit neuer geschwindigkeit starten
 
     startEnemyMovement()
 
-
+    //console.log("isSpawningWave=", isSpawningWave)
     isSpawningWave = false
+    //console.log("isSpawningWave -> ", isSpawningWave)
+}
+
+function spawnEnemyAtRow(row, type) {
+    for (let col = 1; col <= COLUMNS; col++) {
+        if(col > ENEMY_SPAWN_MARGIN.left && col < COLUMNS - ENEMY_SPAWN_MARGIN.right) {
+            const cell = getCell(row, col)
+                if(cell) {
+                    const newEnemy = document.createElement("div")
+                    newEnemy.id = "enemy"
+                    newEnemy.className = `enemy_${type}`
+                    newEnemy.setAttribute("type", type)
+                    cell.appendChild(newEnemy)
+                }
+        }
+    }
 }
 
 
 function startBulletUpdates() {
+    if (DEBUG) {
+        console.info("startBulletUpdates()")
+    }
+
     updateBulletInterval = setInterval(function () {
 
         //spieler bullets
@@ -145,6 +207,10 @@ function startBulletUpdates() {
 }
 
 function startEnemyMovement() {
+    if (DEBUG) {
+        console.info("startEnemyMovement()")
+    }
+
     enemyMoveInterval = setInterval(function () {
         count++;
 
@@ -174,32 +240,70 @@ function startEnemyMovement() {
 }
 
 function startEnemyShooting() {
+    if (DEBUG) {
+        console.info("startEnemyShooting()")
+    }
+
+    let forceShootCur = 0
+    let maxForceShoot = 10
+
+
     enemyShootInterval = setInterval(function () {
         const enemies = getAllEnemies()
         if(enemies.length === 0) return
 
         // jeder gegner hat eine chance zu schießen
-        if (Math.random() < currentEnemyShootChance + enemies.length) {
+
+        let shootCheck = Math.floor(Math.random() * 100)
+        if (shootCheck < currentEnemyShootChance) {
             enemyShoot()
+            forceShootCur = 0
+        } else if (forceShootCur >= maxForceShoot) {
+            enemyShoot()
+            forceShootCur = 0
+        } else {
+            forceShootCur++
         }
     }, 500)
 }
 
 function checkWaveComplete() {
-    if(isSpawningWave || gameover) return
+    if (DEBUG) {
+        console.info("checkWaveComplete()")
+    }
+
+    if(isSpawningWave || gameover || isRespawning) return
 
     const enemies = getAllEnemies()
     if (enemies.length === 0) {
-        curWave++
-        isSpawningWave = true
         console.log("Welle abgeschlossen")
+
+        curWave++
+        //console.log("isSpawningWave=", isSpawningWave)
+        //isSpawningWave = true
+       // console.log("isSpawningWave -> ", isSpawningWave)
+
+/*
         setTimeout(() => {
+            if (DEBUG) {
+                console.info("setTimeout: 2000")
+            }
+
             startNextWave()
-        }, 2000)
+        }, 1000)
+
+ */
+
+        startNextWave()
     }
 }
 
 function checkForLoose() {
+    if (DEBUG) {
+        console.info("checkForLoose()")
+    }
+
+
     const lowestRow = getLowestEnemyRow()
 
     if (lowestRow && lowestRow >= LOOSE_ROW) {
@@ -209,6 +313,11 @@ function checkForLoose() {
 }
 
 function loseLife() {
+    if (DEBUG) {
+        console.info("loseLife()")
+    }
+
+
     curLives--
     updateLivesDisplay()
 
@@ -217,7 +326,9 @@ function loseLife() {
     if(curLives <= 0) {
         endGame()
     } else {
-        isSpawningWave = true
+        console.log("Respawn Prozess gestartet")
+
+        isRespawning = true
         // Stoppe alle Intervals während Respawn
         if (updateBulletInterval) {
             clearInterval(updateBulletInterval)
@@ -241,8 +352,12 @@ function loseLife() {
             curWave--
         }
 
+        console.log("Warte 1 sekunde vor respawn, curwave:", curWave)
+
         // Neustart mit kleiner Verzögerung
         setTimeout(() => {
+            console.log("RespawnTimer abgelaufen")
+            isRespawning = false
             startBulletUpdates()
             startEnemyShooting()
             startNextWave()
@@ -258,6 +373,11 @@ function endGame() {
 }
 
 function showGameOverPopup() {
+    if (DEBUG) {
+        console.info("showGameOverPopup()")
+    }
+
+
     const popup = document.getElementById("popup")
     if (popup) {
         popup.classList.add("show")
@@ -282,10 +402,19 @@ function showGameOverPopup() {
 
 
 function addScore(points) {
+    if (DEBUG) {
+        console.info("addScore()")
+    }
+
     curScore += points
 }
 
 function updateScoreDisplay() {
+    if (DEBUG) {
+        console.info("updateScoreDisplay()")
+    }
+
+
     const scoreElement = document.getElementById("curScore")
     if (scoreElement) {
         scoreElement.innerHTML = formatScore(curScore)
@@ -293,6 +422,11 @@ function updateScoreDisplay() {
 }
 
 function updateLivesDisplay() {
+    if (DEBUG) {
+        console.info("updateLivesDisplay()")
+    }
+
+
     const livesElement = document.querySelector(".score span:last-child")
     if (livesElement) {
         livesElement.innerHTML = "♥".repeat(curLives)
@@ -308,6 +442,11 @@ export function isGameOver() {
 }
 
 export function resetGame() {
+    if (DEBUG) {
+        console.info("resetGame()")
+    }
+
+
     stopGame()
     clearGrid()
     resetBulletCount()
@@ -319,7 +458,11 @@ export function resetGame() {
     count2 = -3
     maxCount = ENEMY_MOVEMENT.initialMaxCount
     direction = "initial"
+
+    console.log("isSpawningWave=", isSpawningWave)
     isSpawningWave = false
+    console.log("isSpawningWave ->", isSpawningWave)
+    isRespawning = false
 
     updateScoreDisplay()
     updateLivesDisplay()
@@ -337,6 +480,7 @@ export function resetGame() {
 }
 
 //HIGHSCORE HANDLING
+/*
 
 export function saveHighscore(username) {
     const highscores = getHighscores()
@@ -347,39 +491,52 @@ export function saveHighscore(username) {
     updateHighscoreDisplay()
 }
 
+
+*/
+
 export function getHighscores() {
-    const stored = localStorage.getItem('spaceInvadersHighscores')
-    return stored ? JSON.parse(stored) : []
+    return highscore
 }
 
 export function updateHighscoreDisplay() {
-    const highscores = getHighscores()
+    const newHighscore = getHighscores()
+    const highscore = (newHighscore.find(obj => "score" in obj) || {}).score
+
     const hiScoreElement = document.querySelector(".score span:nth-child(2)")
 
-    if(hiScoreElement && highscores.length > 0) {
-        hiScoreElement.innerHTML = formatScore(highscores[0].score)
+    if(hiScoreElement && highscore !== null) {
+        hiScoreElement.innerHTML = formatScore(highscore)
     }
 }
 
-
+let lastShoot = 0
 export function handleKeyPress(event) {
     const key = event.key
 
     switch (key) {
         case "ArrowUp":
         case " ":
-            if (!gameover) {
-                shoot()
-                const player = getPlayer()
-                if (player && !player.classList.contains("shooting")) {
-                    player.classList.add("shooting");
-                    player.style.backgroundImage = `url("./img/player_shoot.png")`
 
-                    setTimeout(() => {
-                        player.style.backgroundImage = `url("./img/player.png")`
-                        player.classList.remove("shooting")
-                    }, 80)
+            if (!gameover) {
+                const now = Date.now()
+                if(now - lastShoot > 200) {
+                    const player = getPlayer()
+                    if (player && !player.classList.contains("shooting")) {
+                        player.classList.add("shooting");
+                        player.style.backgroundImage = `url("./img/player_shoot.webp")`
+
+                        setTimeout(() => {
+                            player.style.backgroundImage = `url("./img/player.webp")`
+                            player.classList.remove("shooting")
+                        }, 80)
+                    }
+                    shoot()
+                    lastShoot = now
                 }
+
+
+
+
             }
             break
         case "ArrowLeft":
@@ -397,7 +554,7 @@ export function handleKeyPress(event) {
             }
             break
         default:
-            console.log(`${key} ist nicht belegt`)
+            //console.log(`${key} ist nicht belegt`)
             break
     }
 }
@@ -484,4 +641,73 @@ function createTouchControls() {
 
 export function removeControls() {
     document.removeEventListener("keydown", handleKeyPress);
+}
+
+
+//DEBUG FUNKTIONEN
+export let isDebugMode = false
+export function initiateDebugButtons() {
+    isDebugMode = true
+    updateDebug()
+
+    const debugMenu = document.getElementById("debug_btn")
+
+    const btnSkip = document.getElementById("wave_skip");
+    const btnRestart = document.getElementById("restart_wave");
+    const btnGameOver = document.getElementById("game_over");
+
+    debugMenu.style.display = "inline-block";
+
+    btnSkip.addEventListener("click", () => {
+        console.log("Skip Wave");
+        clearGrid()
+        spawnPlayer()
+        curWave++
+        startNextWave()
+        updateDebug()
+
+    });
+
+    btnRestart.addEventListener("click", () => {
+        console.log("Restart wave");
+        clearGrid()
+        spawnPlayer()
+        startNextWave()
+        updateDebug()
+
+    });
+
+    btnGameOver.addEventListener("click", () => {
+        console.log("Game over");
+        endGame()
+
+    });
+
+}
+
+export function updateDebug() {
+    const curWaveElement = document.getElementById("curWaveDisplay")
+    const waveInfoElement = document.getElementById("waveInfoDisplay")
+
+    curWaveElement.textContent = curWave + 1
+
+
+    let waveInfo = WAVES[curWave]
+    if (!waveInfo) {
+        waveInfo = WAVES[WAVES.length - 1]
+    }
+
+
+// Gegner einzeln auflisten
+    let enemyLines = waveInfo.enemies.map(enemy =>
+        `type: ${enemy.type} rows: ${enemy.rows}`
+    );
+
+// Restliche Daten anhängen
+    enemyLines.push(`move interval: ${waveInfo.enemySpeed}ms`);
+    enemyLines.push(`shoot chance: ${waveInfo.enemyShootChance}%`);
+
+// Alles zusammen anzeigen
+    waveInfoElement.textContent = enemyLines.join('\n');
+
 }
