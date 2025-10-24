@@ -66,6 +66,7 @@ body {
 
     .touch-controls {
         grid-area: 3 / 3 / 3 / 2;
+        margin-top: 90px;
     }
 
     #highscore {
@@ -73,6 +74,7 @@ body {
     }
 
     .touch-btn {
+        margin: 10px;
         padding: 25px;
         font-size: 90px;
         background-color: #1c2c68;
